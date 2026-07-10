@@ -1,4 +1,5 @@
 using Divider.Data;
+using Divider.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
@@ -13,6 +14,8 @@ builder.Services.AddControllers()
 builder.Services.AddDbContext<DividerDbContext>(options => 
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
+
+builder.Services.AddScoped<BalanceCalculatorService>();
 
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
