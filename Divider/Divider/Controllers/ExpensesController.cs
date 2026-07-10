@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Divider.Data;
+﻿using Divider.Data;
 using Divider.DTOs;
 using Divider.Models;
+using Divider.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Divider.Controllers;
 
@@ -11,10 +12,12 @@ namespace Divider.Controllers;
 public class ExpensesController : ControllerBase
 {
     private readonly DividerDbContext _context;
+    private readonly BalanceCalculatorService _balanceCalculator;
 
-    public ExpensesController(DividerDbContext context)
+    public ExpensesController(DividerDbContext context, BalanceCalculatorService balanceCalculator)
     {
         _context = context;
+        _balanceCalculator = balanceCalculator;
     }
 
     // GET /api/groups/{groupId}/expenses
@@ -149,5 +152,37 @@ public class ExpensesController : ControllerBase
         };
 
         return CreatedAtAction(nameof(GetExpenses), new { groupId }, dto);
+    }
+
+    // GET /api/groups/{groupId}/expenses/settlements
+    [HttpGet("settlements")]
+    public async Task<ActionResult<List<SettlementDto>>> GetSettlements(Guid groupId)
+    {
+        var group = await _context.Groups
+            .Include(g => g.Members)
+            .FirstOrDefaultAsync(g => g.Id == groupId);
+
+        if (group is null)
+        {
+            return NotFound($"Grupo {groupId} não encontrado.");
+        }
+
+        var expenses = await _context.Expenses
+            .Where(e => e.GroupId == groupId)
+            .Include(e => e.Splits)
+            .ToListAsync();
+
+        var memberIds = group.Members.Select(m => m.Id).ToList();
+        var netBalances = _balanceCalculator.CalculateNetBalances(memberIds, expenses);
+        var settlements = _balanceCalculator.SimplifyDebts(netBalances);
+
+        var dtos = settlements.Select(s => new SettlementDto
+        {
+            FromMemberId = s.FromMemberId,
+            ToMemberId = s.ToMemberId,
+            Amount = s.Amount
+        }).ToList();
+
+        return Ok(dtos);
     }
 }
