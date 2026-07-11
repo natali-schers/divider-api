@@ -2,11 +2,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY Divider/*.csproj Divider/
-RUN dotnet restore Divider/Divider.csproj
+COPY Divider/Divider/*.csproj Divider/Divider/
+RUN dotnet restore Divider/Divider/Divider.csproj
 
-COPY Divider/. Divider/
-WORKDIR /src/Divider
+COPY Divider/Divider/. Divider/Divider/
+WORKDIR /src/Divider/Divider
 RUN dotnet publish Divider.csproj -c Release -o /app/publish
 
 # Estágio 2: imagem final, mais leve, só com o runtime
