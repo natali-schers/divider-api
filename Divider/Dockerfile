@@ -3,10 +3,10 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY *.csproj .
-RUN dotnet restore
+RUN dotnet restore Divider.csproj
 
 COPY . .
-RUN dotnet publish -c Release -o /app/publish
+RUN dotnet publish Divider.csproj -c Release -o /app/publish
 
 # Estágio 2: imagem final, mais leve, só com o runtime
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
