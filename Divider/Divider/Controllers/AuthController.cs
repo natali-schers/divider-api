@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Divider.Data;
+﻿using Divider.Data;
 using Divider.DTOs;
 using Divider.Models;
+using Divider.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Divider.Controllers;
 
@@ -11,10 +12,12 @@ namespace Divider.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly DividerDbContext _context;
+    private readonly JwtService _jwtService;
 
-    public AuthController(DividerDbContext context)
+    public AuthController(DividerDbContext context, JwtService jwtService)
     {
         _context = context;
+        _jwtService = jwtService;
     }
 
     [HttpPost("register")]
@@ -53,7 +56,8 @@ public class AuthController : ControllerBase
             Email = user.Email,
         };
 
-        return CreatedAtAction(nameof(Register), dto);
+        var token = _jwtService.GenerateToken(user);
+        return CreatedAtAction(nameof(Register), new AuthResponseDto { Token = token, User = dto });
     }
 
     [HttpPost("login")]
@@ -76,6 +80,7 @@ public class AuthController : ControllerBase
             Email = user.Email,
         };
 
-        return Ok(dto);
+        var token = _jwtService.GenerateToken(user);
+        return Ok(new AuthResponseDto { Token = token, User = dto });
     }
 }
