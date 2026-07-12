@@ -1,6 +1,4 @@
-﻿using System.Text.RegularExpressions;
-
-namespace Divider.Models;
+﻿namespace Divider.Models;
 
 public class Member
 {
@@ -11,6 +9,12 @@ public class Member
     public Guid GroupId { get; set; }
 
     public Group? Group { get; set; }
+
+    // Vínculo opcional com uma conta de usuário real.
+    // null = "convidado" (só nome, sem conta associada ainda).
+    public Guid? UserId { get; set; }
+
+    public User? User { get; set; }
 
     public ICollection<Expense> ExpensesPaid { get; set; } = new List<Expense>();
 

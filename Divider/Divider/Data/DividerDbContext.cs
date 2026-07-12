@@ -17,6 +17,8 @@ public class DividerDbContext : DbContext
         ;
     public DbSet<ExpenseSplit> ExpenseSplits => Set<ExpenseSplit>();
 
+    public DbSet<User> Users => Set<User>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -27,6 +29,13 @@ public class DividerDbContext : DbContext
             .WithMany(g => g.Members)
             .HasForeignKey(m => m.GroupId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Um Member pode ter um User associado (opcional)
+        modelBuilder.Entity<Member>()
+            .HasOne(m => m.User)
+            .WithMany()
+            .HasForeignKey(m => m.UserId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // Uma Expense pertence a um Group
         modelBuilder.Entity<Expense>()
@@ -64,5 +73,10 @@ public class DividerDbContext : DbContext
         modelBuilder.Entity<ExpenseSplit>()
             .Property(es => es.Amount)
             .HasPrecision(18, 2);
+
+        // Configuração de índice único para o campo Email do User
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
     }
 }

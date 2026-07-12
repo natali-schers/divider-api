@@ -2,6 +2,7 @@
 using Divider.DTOs;
 using Divider.Models;
 using Divider.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,7 @@ namespace Divider.Controllers;
 
 [ApiController]
 [Route("api/groups/{groupId:guid}/expenses")]
+[Authorize]
 public class ExpensesController : ControllerBase
 {
     private readonly DividerDbContext _context;
