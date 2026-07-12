@@ -17,6 +17,8 @@ public class DividerDbContext : DbContext
         ;
     public DbSet<ExpenseSplit> ExpenseSplits => Set<ExpenseSplit>();
 
+    public DbSet<User> Users => Set<User>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -64,5 +66,10 @@ public class DividerDbContext : DbContext
         modelBuilder.Entity<ExpenseSplit>()
             .Property(es => es.Amount)
             .HasPrecision(18, 2);
+
+        // Configuração de índice único para o campo Email do User
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
     }
 }
