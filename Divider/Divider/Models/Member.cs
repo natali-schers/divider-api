@@ -16,6 +16,9 @@ public class Member
 
     public User? User { get; set; }
 
+    // Email usado para vincular convidado a uma conta futura.
+    public string? InviteEmail { get; set; }
+
     public ICollection<Expense> ExpensesPaid { get; set; } = new List<Expense>();
 
     public ICollection<ExpenseSplit> ExpenseSplits { get; set; } = new List<ExpenseSplit>();
