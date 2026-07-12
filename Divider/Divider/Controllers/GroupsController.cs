@@ -7,7 +7,7 @@ using Divider.Models;
 namespace Divider.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/groups")]
 public class GroupsController : ControllerBase
 {
     private readonly DividerDbContext _context;
