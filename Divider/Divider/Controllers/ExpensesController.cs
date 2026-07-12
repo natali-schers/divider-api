@@ -24,12 +24,19 @@ public class ExpensesController : ControllerBase
 
     // GET /api/groups/{groupId}/expenses
     [HttpGet]
+    [HttpGet]
     public async Task<ActionResult<List<ExpenseDto>>> GetExpenses(Guid groupId)
     {
-        var groupExists = await _context.Groups.AnyAsync(g => g.Id == groupId);
-        if (!groupExists)
+        var (group, isMember) = await GetGroupAndCheckMembership(groupId);
+
+        if (group is null)
         {
             return NotFound($"Grupo {groupId} não encontrado.");
+        }
+
+        if (!isMember)
+        {
+            return Forbid();
         }
 
         var expenses = await _context.Expenses
@@ -58,6 +65,8 @@ public class ExpensesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ExpenseDto>> CreateExpense(Guid groupId, CreateExpenseDto request)
     {
+        var currentUserId = this.GetCurrentUserId();
+
         var group = await _context.Groups
             .Include(g => g.Members)
             .FirstOrDefaultAsync(g => g.Id == groupId);
@@ -65,6 +74,12 @@ public class ExpensesController : ControllerBase
         if (group is null)
         {
             return NotFound($"Grupo {groupId} não encontrado.");
+        }
+
+        var isMember = group.Members.Any(m => m.UserId == currentUserId);
+        if (!isMember)
+        {
+            return Forbid();
         }
 
         if (!Enum.TryParse<SplitType>(request.SplitType, ignoreCase: true, out var splitType))
@@ -160,13 +175,16 @@ public class ExpensesController : ControllerBase
     [HttpGet("settlements")]
     public async Task<ActionResult<List<SettlementDto>>> GetSettlements(Guid groupId)
     {
-        var group = await _context.Groups
-            .Include(g => g.Members)
-            .FirstOrDefaultAsync(g => g.Id == groupId);
+        var (group, isMember) = await GetGroupAndCheckMembership(groupId);
 
         if (group is null)
         {
             return NotFound($"Grupo {groupId} não encontrado.");
+        }
+
+        if (!isMember)
+        {
+            return Forbid();
         }
 
         var expenses = await _context.Expenses
@@ -174,7 +192,7 @@ public class ExpensesController : ControllerBase
             .Include(e => e.Splits)
             .ToListAsync();
 
-        var memberIds = group.Members.Select(m => m.Id).ToList();
+        var memberIds = group!.Members.Select(m => m.Id).ToList();
         var netBalances = _balanceCalculator.CalculateNetBalances(memberIds, expenses);
         var settlements = _balanceCalculator.SimplifyDebts(netBalances);
 
@@ -187,4 +205,23 @@ public class ExpensesController : ControllerBase
 
         return Ok(dtos);
     }
+
+    #region Métodos privados
+    private async Task<(Group? Group, bool IsMember)> GetGroupAndCheckMembership(Guid groupId)
+    {
+        var currentUserId = this.GetCurrentUserId();
+
+        var group = await _context.Groups
+            .Include(g => g.Members)
+            .FirstOrDefaultAsync(g => g.Id == groupId);
+
+        if (group is null)
+        {
+            return (null, false);
+        }
+
+        var isMember = group.Members.Any(m => m.UserId == currentUserId);
+        return (group, isMember);
+    }
+    #endregion Métodos privados
 }
