@@ -81,7 +81,6 @@ public class GroupsController : ControllerBase
 
     // POST /api/groups
     [HttpPost]
-    [HttpPost]
     public async Task<ActionResult<GroupDto>> CreateGroup(CreateGroupDto request)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
@@ -99,7 +98,7 @@ public class GroupsController : ControllerBase
 
         var members = new List<Member>
         {
-        // O criador do grupo já entra como membro vinculado à própria conta.
+            // O criador do grupo já entra como membro vinculado à própria conta.
             new()
             {
                 Id = Guid.NewGuid(),
@@ -108,11 +107,32 @@ public class GroupsController : ControllerBase
             },
         };
 
-        // Membros convidados (só nome, sem conta ainda).
-        members.AddRange(request.MemberNames.Select(name => new Member
+        var requestMemberEmails = request.Members
+            .Where(m => !string.IsNullOrWhiteSpace(m.InviteEmail))
+            .Select(m => m.InviteEmail!.Trim().ToLowerInvariant())
+            .ToList();
+
+        var existingUsersByEmail = await _context.Users
+            .Where(u => requestMemberEmails.Contains(u.Email))
+            .ToDictionaryAsync(u => u.Email, u => u.Id);
+
+        members.AddRange(request.Members.Select(m =>
         {
-            Id = Guid.NewGuid(),
-            Name = name,
+            var normalizedEmail = string.IsNullOrWhiteSpace(m.InviteEmail)
+                ? null
+                : m.InviteEmail.Trim().ToLowerInvariant();
+
+            var matchedUserId = normalizedEmail is not null && existingUsersByEmail.TryGetValue(normalizedEmail, out var userId)
+                ? userId
+                : (Guid?)null;
+
+            return new Member
+            {
+                Id = Guid.NewGuid(),
+                Name = m.Name,
+                InviteEmail = normalizedEmail,
+                UserId = matchedUserId,
+            };
         }));
 
         if (members.Count < 2)
