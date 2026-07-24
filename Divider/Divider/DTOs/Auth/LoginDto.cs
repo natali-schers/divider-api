@@ -1,4 +1,4 @@
-﻿namespace Divider.DTOs;
+﻿namespace Divider.DTOs.Auth;
 
 public class LoginDto
 {

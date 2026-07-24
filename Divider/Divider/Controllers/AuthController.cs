@@ -1,5 +1,5 @@
 ﻿using Divider.Data;
-using Divider.DTOs;
+using Divider.DTOs.Auth;
 using Divider.Models;
 using Divider.Services;
 using Microsoft.AspNetCore.Mvc;
