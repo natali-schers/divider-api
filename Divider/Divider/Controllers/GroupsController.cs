@@ -1,6 +1,6 @@
 ﻿using Divider.Data;
-using Divider.DTOs;
 using Divider.DTOs.Group;
+using Divider.DTOs.Member;
 using Divider.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
