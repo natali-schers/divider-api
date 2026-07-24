@@ -1,4 +1,6 @@
-﻿namespace Divider.DTOs;
+﻿using Divider.DTOs.Member;
+
+namespace Divider.DTOs.Group;
 
 public class CreateGroupDto
 {

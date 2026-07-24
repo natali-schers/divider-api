@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Divider.Data;
-using Divider.DTOs;
+using Divider.DTOs.Member;
 
 namespace Divider.Controllers;
 
