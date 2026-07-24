@@ -24,7 +24,6 @@ public class ExpensesController : ControllerBase
 
     // GET /api/groups/{groupId}/expenses
     [HttpGet]
-    [HttpGet]
     public async Task<ActionResult<List<ExpenseDto>>> GetExpenses(Guid groupId)
     {
         var (group, isMember) = await GetGroupAndCheckMembership(groupId);
@@ -77,6 +76,7 @@ public class ExpensesController : ControllerBase
         }
 
         var isMember = group.Members.Any(m => m.UserId == currentUserId);
+
         if (!isMember)
         {
             return Forbid();
@@ -169,6 +169,38 @@ public class ExpensesController : ControllerBase
         };
 
         return CreatedAtAction(nameof(GetExpenses), new { groupId }, dto);
+    }
+
+    // DELETE /api/groups/{groupId}/expenses/{expenseId}
+    [HttpDelete("{expenseId:guid}")]
+    public async Task<ActionResult> DeleteExpense(Guid groupId, Guid expenseId)
+    {
+        var currentUserId = this.GetCurrentUserId();
+
+        var (group, isMember) = await GetGroupAndCheckMembership(groupId);
+
+        if (group is null)
+            return NotFound("Grupo não encontrado.");
+
+        if (!isMember)
+            return Forbid("Acesso negado.");
+
+        var expense = await _context.Expenses
+            .FirstOrDefaultAsync(e => e.Id == expenseId && e.GroupId == groupId);
+
+        if (expense == null)
+            return NotFound("Despesa não encontrada.");
+
+        var currentMemberId = group!.Members
+            .FirstOrDefault(m => m.UserId == currentUserId)?.Id;
+
+        if (currentMemberId is null || expense.PaidByMemberId != currentMemberId)
+            return Forbid("Apenas o membro que pagou a despesa pode deletá-la.");
+
+        _context.Expenses.Remove(expense);
+        await _context.SaveChangesAsync();
+
+        return Ok("Despesa excluída com sucesso.");
     }
 
     // GET /api/groups/{groupId}/expenses/settlements

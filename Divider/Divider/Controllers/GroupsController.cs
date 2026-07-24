@@ -163,4 +163,36 @@ public class GroupsController : ControllerBase
 
         return CreatedAtAction(nameof(GetGroupById), new { id = group.Id }, dto);
     }
+
+    // DELETE /api/groups/{id}
+    [HttpDelete("{id:guid}")]
+    public async Task<ActionResult> DeleteGroup(Guid id)
+    {
+        var currentUserId = this.GetCurrentUserId();
+
+        var group = await _context.Groups
+            .Include(g => g.Members)
+            .FirstOrDefaultAsync(g => g.Id == id);
+
+        if (group is null)
+            return NotFound("Grupo não encontrado.");
+
+        var isMember = group.Members.Any(m => m.UserId == currentUserId);
+
+        if (!isMember)
+            return Forbid("Acesso negado.");
+
+        group.Expenses = await _context.Expenses
+            .Where(e => e.GroupId == group.Id)
+            .ToListAsync();
+
+        if (group.Expenses.Any())
+            return BadRequest("Não é possível excluir um grupo que possui despesas pendentes.");
+
+        _context.Groups.Remove(group);
+
+        await _context.SaveChangesAsync();
+
+        return Ok("Grupo excluído com sucesso.");
+    }
 }
