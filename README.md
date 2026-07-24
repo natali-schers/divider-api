@@ -1,4 +1,4 @@
-# 🧮 Divider API
+# 🧮 Divider API (em desenvolvimento)
 
 ---
 
