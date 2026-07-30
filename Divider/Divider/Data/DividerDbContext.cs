@@ -13,8 +13,8 @@ public class DividerDbContext : DbContext
 
     public DbSet<Member> Members => Set<Member>();
 
-    public DbSet<Expense> Expenses => Set<Expense>()
-        ;
+    public DbSet<Expense> Expenses => Set<Expense>();
+
     public DbSet<ExpenseSplit> ExpenseSplits => Set<ExpenseSplit>();
 
     public DbSet<User> Users => Set<User>();
@@ -34,7 +34,8 @@ public class DividerDbContext : DbContext
         modelBuilder.Entity<Member>()
             .HasOne(m => m.User)
             .WithMany()
-            .HasForeignKey(m => m.UserId)
+            .HasForeignKey(m => m.Email)
+            .HasPrincipalKey(u => u.Email)
             .OnDelete(DeleteBehavior.SetNull);
 
         // Uma Expense pertence a um Group

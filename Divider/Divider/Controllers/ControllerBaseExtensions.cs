@@ -16,4 +16,16 @@ public static class ControllerBaseExtensions
 
         return userId;
     }
+
+    public static string GetCurrentUserEmail(this ControllerBase controller)
+    {
+        var emailClaim = controller.User.FindFirst(JwtRegisteredClaimNames.Email)?.Value;
+
+        if (emailClaim is null)
+        {
+            throw new UnauthorizedAccessException("Token inválido: Email de usuário não encontrado.");
+        }
+
+        return emailClaim;
+    }
 }
