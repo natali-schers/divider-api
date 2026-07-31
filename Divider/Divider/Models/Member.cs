@@ -11,9 +11,9 @@ public class Member
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Email do membro.
+    /// Nome do membro.
     /// </summary>
-    public string? Email { get; set; }
+    public required string Name { get; set; }
 
     /// <summary>
     /// Identificador do grupo ao qual este membro pertence.
@@ -26,9 +26,20 @@ public class Member
     public Group? Group { get; set; }
 
     /// <summary>
+    /// Vínculo opcional com uma conta de usuário real.
+    /// null = "convidado" (só nome, sem conta associada ainda).
+    /// </summary>
+    public Guid? UserId { get; set; }
+
+    /// <summary>
     /// Usuário associado a este membro, se houver. Se for null, significa que o membro é um convidado sem conta associada.
     /// </summary>
     public User? User { get; set; }
+
+    /// <summary>
+    /// Email usado para vincular convidado a uma conta futura.
+    /// </summary>
+    public string? InviteEmail { get; set; }
 
     /// <summary>
     /// Lista de despesas que este membro pagou.

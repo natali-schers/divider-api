@@ -24,10 +24,10 @@ public class GroupsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<GroupDto>>> GetGroups()
     {
-        var currentUserEmail = this.GetCurrentUserEmail();
+        var currentUserId = this.GetCurrentUserId();
 
         var groups = await _context.Groups
-            .Where(g => g.Members.Any(m => m.Email == currentUserEmail))
+            .Where(g => g.Members.Any(m => m.UserId == currentUserId))
             .Include(g => g.Members)
             .Select(g => new GroupDto
             {
@@ -36,7 +36,7 @@ public class GroupsController : ControllerBase
                 Members = g.Members.Select(m => new MemberDto
                 {
                     Id = m.Id,
-                    Email = m.Email
+                    Name = m.Name
                 }).ToList()
             })
             .ToListAsync();
@@ -48,7 +48,7 @@ public class GroupsController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<GroupDto>> GetGroupById(Guid id)
     {
-        var currentUserEmail = this.GetCurrentUserEmail();
+        var currentUserId = this.GetCurrentUserId();
 
         var group = await _context.Groups
             .Include(g => g.Members)
@@ -59,7 +59,7 @@ public class GroupsController : ControllerBase
             return NotFound();
         }
 
-        var isMember = group.Members.Any(m => m.Email == currentUserEmail);
+        var isMember = group.Members.Any(m => m.UserId == currentUserId);
 
         if (!isMember)
         {
@@ -73,7 +73,7 @@ public class GroupsController : ControllerBase
             Members = group.Members.Select(m => new MemberDto
             {
                 Id = m.Id,
-                Email = m.Email
+                Name = m.Name
             }).ToList()
         };
 
@@ -103,12 +103,14 @@ public class GroupsController : ControllerBase
             new()
             {
                 Id = Guid.NewGuid(),
-                Email = currentUser.Email,
+                Name = currentUser.Name,
+                UserId = currentUser.Id,
             },
         };
 
         var requestMemberEmails = request.Members
-            .Select(m => m.Email!.Trim().ToLowerInvariant())
+            .Where(m => !string.IsNullOrWhiteSpace(m.InviteEmail))
+            .Select(m => m.InviteEmail!.Trim().ToLowerInvariant())
             .ToList();
 
         var existingUsersByEmail = await _context.Users
@@ -117,7 +119,9 @@ public class GroupsController : ControllerBase
 
         members.AddRange(request.Members.Select(m =>
         {
-            var normalizedEmail = m.Email.Trim().ToLowerInvariant();
+            var normalizedEmail = string.IsNullOrWhiteSpace(m.InviteEmail)
+                ? null
+                : m.InviteEmail.Trim().ToLowerInvariant();
 
             var matchedUserId = normalizedEmail is not null && existingUsersByEmail.TryGetValue(normalizedEmail, out var userId)
                 ? userId
@@ -126,7 +130,9 @@ public class GroupsController : ControllerBase
             return new Member
             {
                 Id = Guid.NewGuid(),
-                Email = m.Email
+                Name = m.Name,
+                InviteEmail = normalizedEmail,
+                UserId = matchedUserId,
             };
         }));
 
@@ -152,7 +158,7 @@ public class GroupsController : ControllerBase
             Members = group.Members.Select(m => new MemberDto
             {
                 Id = m.Id,
-                Email = m.Email
+                Name = m.Name
             }).ToList()
         };
 
@@ -163,7 +169,7 @@ public class GroupsController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult> DeleteGroup(Guid id)
     {
-        var currentUserEmail = this.GetCurrentUserEmail();
+        var currentUserId = this.GetCurrentUserId();
 
         var group = await _context.Groups
             .Include(g => g.Members)
@@ -172,7 +178,7 @@ public class GroupsController : ControllerBase
         if (group is null)
             return NotFound("Grupo não encontrado.");
 
-        var isMember = group.Members.Any(m => m.Email == currentUserEmail);
+        var isMember = group.Members.Any(m => m.UserId == currentUserId);
 
         if (!isMember)
             return Forbid("Acesso negado.");
