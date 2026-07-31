@@ -13,8 +13,8 @@ public class DividerDbContext : DbContext
 
     public DbSet<Member> Members => Set<Member>();
 
-    public DbSet<Expense> Expenses => Set<Expense>()
-        ;
+    public DbSet<Expense> Expenses => Set<Expense>();
+
     public DbSet<ExpenseSplit> ExpenseSplits => Set<ExpenseSplit>();
 
     public DbSet<User> Users => Set<User>();

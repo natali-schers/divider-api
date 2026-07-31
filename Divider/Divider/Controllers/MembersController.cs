@@ -18,44 +18,6 @@ public class MembersController : ControllerBase
         _context = context;
     }
 
-    // PATCH /api/groups/{groupId}/members/{memberId}/invite-email
-    [HttpPatch("groups/{groupId:guid}/members/{memberId:guid}/invite-email")]
-    public async Task<IActionResult> SetInviteEmail(Guid groupId, Guid memberId, SetInviteEmailDto request)
-    {
-        var currentUserId = this.GetCurrentUserId();
-
-        var group = await _context.Groups
-            .Include(g => g.Members)
-            .FirstOrDefaultAsync(g => g.Id == groupId);
-
-        if (group is null)
-        {
-            return NotFound("Grupo não encontrado.");
-        }
-
-        var isMember = group.Members.Any(m => m.UserId == currentUserId);
-        if (!isMember)
-        {
-            return Forbid();
-        }
-
-        var member = group.Members.FirstOrDefault(m => m.Id == memberId);
-        if (member is null)
-        {
-            return NotFound("Membro não encontrado nesse grupo.");
-        }
-
-        if (member.UserId is not null)
-        {
-            return BadRequest("Esse membro já está vinculado a uma conta.");
-        }
-
-        member.InviteEmail = request.Email.Trim().ToLowerInvariant();
-        await _context.SaveChangesAsync();
-
-        return NoContent();
-    }
-
     // GET /api/members/pending-invites
     [HttpGet("members/pending-invites")]
     public async Task<ActionResult<List<PendingInviteDto>>> GetPendingInvites()
@@ -74,7 +36,6 @@ public class MembersController : ControllerBase
             .Select(m => new PendingInviteDto
             {
                 MemberId = m.Id,
-                MemberName = m.Name,
                 GroupId = m.GroupId,
                 GroupName = m.Group!.Name,
             })
@@ -102,17 +63,13 @@ public class MembersController : ControllerBase
             return NotFound("Membro não encontrado.");
         }
 
-        if (member.UserId is not null)
-        {
-            return BadRequest("Esse membro já está vinculado a uma conta.");
-        }
-
         if (member.InviteEmail != currentUser.Email)
         {
             return Forbid();
         }
 
         member.UserId = currentUser.Id;
+        member.InviteEmail = null;
         await _context.SaveChangesAsync();
 
         return NoContent();

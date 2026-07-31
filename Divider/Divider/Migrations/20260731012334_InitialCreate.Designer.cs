@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Divider.Migrations
 {
     [DbContext(typeof(DividerDbContext))]
-    [Migration("20260712200326_AddUserLinkToMember")]
-    partial class AddUserLinkToMember
+    [Migration("20260731012334_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -109,8 +109,7 @@ namespace Divider.Migrations
                     b.Property<Guid>("GroupId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
+                    b.Property<string>("InviteEmail")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("UserId")

@@ -11,11 +11,6 @@ public class Member
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Nome do membro.
-    /// </summary>
-    public required string Name { get; set; }
-
-    /// <summary>
     /// Identificador do grupo ao qual este membro pertence.
     /// </summary>
     public Guid GroupId { get; set; }
@@ -26,8 +21,7 @@ public class Member
     public Group? Group { get; set; }
 
     /// <summary>
-    /// Vínculo opcional com uma conta de usuário real.
-    /// null = "convidado" (só nome, sem conta associada ainda).
+    /// Vínculo com uma conta de usuário real.
     /// </summary>
     public Guid? UserId { get; set; }
 

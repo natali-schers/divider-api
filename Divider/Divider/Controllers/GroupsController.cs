@@ -36,7 +36,7 @@ public class GroupsController : ControllerBase
                 Members = g.Members.Select(m => new MemberDto
                 {
                     Id = m.Id,
-                    Name = m.Name
+                    InviteEmail = m.InviteEmail,
                 }).ToList()
             })
             .ToListAsync();
@@ -73,7 +73,7 @@ public class GroupsController : ControllerBase
             Members = group.Members.Select(m => new MemberDto
             {
                 Id = m.Id,
-                Name = m.Name
+                InviteEmail = m.InviteEmail,
             }).ToList()
         };
 
@@ -84,17 +84,17 @@ public class GroupsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<GroupDto>> CreateGroup(CreateGroupDto request)
     {
-        if (string.IsNullOrWhiteSpace(request.Name))
-        {
-            return BadRequest("Informe um nome de grupo.");
-        }
-
         var currentUserId = this.GetCurrentUserId();
         var currentUser = await _context.Users.FindAsync(currentUserId);
 
         if (currentUser is null)
         {
-            return Unauthorized();
+            return Unauthorized("Faça login para criar um grupo.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            return BadRequest("Informe um nome de grupo.");
         }
 
         var members = new List<Member>
@@ -103,7 +103,6 @@ public class GroupsController : ControllerBase
             new()
             {
                 Id = Guid.NewGuid(),
-                Name = currentUser.Name,
                 UserId = currentUser.Id,
             },
         };
@@ -119,19 +118,18 @@ public class GroupsController : ControllerBase
 
         members.AddRange(request.Members.Select(m =>
         {
-            var normalizedEmail = string.IsNullOrWhiteSpace(m.InviteEmail)
+            var normalizedInviteEmail = string.IsNullOrWhiteSpace(m.InviteEmail)
                 ? null
                 : m.InviteEmail.Trim().ToLowerInvariant();
 
-            var matchedUserId = normalizedEmail is not null && existingUsersByEmail.TryGetValue(normalizedEmail, out var userId)
+            var matchedUserId = normalizedInviteEmail is not null && existingUsersByEmail.TryGetValue(normalizedInviteEmail, out var userId)
                 ? userId
                 : (Guid?)null;
 
             return new Member
             {
                 Id = Guid.NewGuid(),
-                Name = m.Name,
-                InviteEmail = normalizedEmail,
+                InviteEmail = matchedUserId is null ? normalizedInviteEmail : null,
                 UserId = matchedUserId,
             };
         }));
@@ -149,6 +147,7 @@ public class GroupsController : ControllerBase
         };
 
         _context.Groups.Add(group);
+
         await _context.SaveChangesAsync();
 
         var dto = new GroupDto
@@ -158,7 +157,7 @@ public class GroupsController : ControllerBase
             Members = group.Members.Select(m => new MemberDto
             {
                 Id = m.Id,
-                Name = m.Name
+                InviteEmail = m.InviteEmail,
             }).ToList()
         };
 
