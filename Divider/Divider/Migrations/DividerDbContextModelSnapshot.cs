@@ -103,17 +103,20 @@ namespace Divider.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Email")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<Guid>("GroupId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("InviteEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Email");
-
                     b.HasIndex("GroupId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Members");
                 });
@@ -187,17 +190,16 @@ namespace Divider.Migrations
 
             modelBuilder.Entity("Divider.Models.Member", b =>
                 {
-                    b.HasOne("Divider.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("Email")
-                        .HasPrincipalKey("Email")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("Divider.Models.Group", "Group")
                         .WithMany("Members")
                         .HasForeignKey("GroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Divider.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Group");
 

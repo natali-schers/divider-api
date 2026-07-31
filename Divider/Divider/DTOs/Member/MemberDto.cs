@@ -3,5 +3,6 @@
 public class MemberDto
 {
     public Guid Id { get; set; }
-    public required string Email { get; set; }
+
+    public string? InviteEmail { get; set; }
 }

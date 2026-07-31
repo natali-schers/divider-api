@@ -2,5 +2,5 @@
 
 public class CreateMemberDto
 {
-    public required string Email { get; set; }
+    public required string InviteEmail { get; set; }
 }

@@ -64,7 +64,7 @@ public class ExpensesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ExpenseDto>> CreateExpense(Guid groupId, CreateExpenseDto request)
     {
-        var currentUserEmail = this.GetCurrentUserEmail();
+        var currentUserId = this.GetCurrentUserId();
 
         var group = await _context.Groups
             .Include(g => g.Members)
@@ -75,7 +75,7 @@ public class ExpensesController : ControllerBase
             return NotFound($"Grupo {groupId} não encontrado.");
         }
 
-        var isMember = group.Members.Any(m => m.Email == currentUserEmail);
+        var isMember = group.Members.Any(m => m.UserId == currentUserId);
 
         if (!isMember)
         {
@@ -175,7 +175,7 @@ public class ExpensesController : ControllerBase
     [HttpDelete("{expenseId:guid}")]
     public async Task<ActionResult> DeleteExpense(Guid groupId, Guid expenseId)
     {
-        var currentUserEmail = this.GetCurrentUserEmail();
+        var currentUserId = this.GetCurrentUserId();
 
         var (group, isMember) = await GetGroupAndCheckMembership(groupId);
 
@@ -192,7 +192,7 @@ public class ExpensesController : ControllerBase
             return NotFound("Despesa não encontrada.");
 
         var currentMemberId = group!.Members
-            .FirstOrDefault(m => m.Email == currentUserEmail)?.Id;
+            .FirstOrDefault(m => m.UserId == currentUserId)?.Id;
 
         if (currentMemberId is null || expense.PaidByMemberId != currentMemberId)
             return Forbid("Apenas o membro que pagou a despesa pode deletá-la.");
@@ -241,7 +241,7 @@ public class ExpensesController : ControllerBase
     #region Métodos privados
     private async Task<(Group? Group, bool IsMember)> GetGroupAndCheckMembership(Guid groupId)
     {
-        var currentUserEmail = this.GetCurrentUserEmail();
+        var currentUserId = this.GetCurrentUserId();
 
         var group = await _context.Groups
             .Include(g => g.Members)
@@ -252,7 +252,7 @@ public class ExpensesController : ControllerBase
             return (null, false);
         }
 
-        var isMember = group.Members.Any(m => m.Email == currentUserEmail);
+        var isMember = group.Members.Any(m => m.UserId == currentUserId);
         return (group, isMember);
     }
     #endregion Métodos privados

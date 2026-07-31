@@ -34,8 +34,7 @@ public class DividerDbContext : DbContext
         modelBuilder.Entity<Member>()
             .HasOne(m => m.User)
             .WithMany()
-            .HasForeignKey(m => m.Email)
-            .HasPrincipalKey(u => u.Email)
+            .HasForeignKey(m => m.UserId)
             .OnDelete(DeleteBehavior.SetNull);
 
         // Uma Expense pertence a um Group
