@@ -112,24 +112,18 @@ public class GroupsController : ControllerBase
             .Select(m => m.InviteEmail!.Trim().ToLowerInvariant())
             .ToList();
 
-        var existingUsersByEmail = await _context.Users
-            .Where(u => requestMemberEmails.Contains(u.Email))
-            .ToDictionaryAsync(u => u.Email, u => u.Id);
-
         members.AddRange(request.Members.Select(m =>
         {
             var normalizedInviteEmail = string.IsNullOrWhiteSpace(m.InviteEmail)
                 ? null
                 : m.InviteEmail.Trim().ToLowerInvariant();
 
-            var matchedUserId = normalizedInviteEmail is not null && existingUsersByEmail.TryGetValue(normalizedInviteEmail, out var userId)
-                ? userId
-                : (Guid?)null;
+            var matchedUserId = (Guid?)null;
 
             return new Member
             {
                 Id = Guid.NewGuid(),
-                InviteEmail = matchedUserId is null ? normalizedInviteEmail : null,
+                InviteEmail = normalizedInviteEmail,
                 UserId = matchedUserId,
             };
         }));
@@ -158,6 +152,7 @@ public class GroupsController : ControllerBase
             {
                 Id = m.Id,
                 InviteEmail = m.InviteEmail,
+                UserId = m.UserId
             }).ToList()
         };
 
