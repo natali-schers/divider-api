@@ -1,4 +1,5 @@
 ﻿using Divider.Data;
+using Divider.DTOs.Auth;
 using Divider.DTOs.Group;
 using Divider.DTOs.Member;
 using Divider.Models;
@@ -29,6 +30,7 @@ public class GroupsController : ControllerBase
         var groups = await _context.Groups
             .Where(g => g.Members.Any(m => m.UserId == currentUserId))
             .Include(g => g.Members)
+            .ThenInclude(m => m.User)
             .Select(g => new GroupDto
             {
                 Id = g.Id,
@@ -37,6 +39,12 @@ public class GroupsController : ControllerBase
                 {
                     Id = m.Id,
                     InviteEmail = m.InviteEmail,
+                    User = m.User != null ? new UserDto
+                    {
+                        Id = m.User.Id,
+                        Name = m.User.Name,
+                        Email = m.User.Email,
+                    } : null
                 }).ToList()
             })
             .ToListAsync();
@@ -52,6 +60,7 @@ public class GroupsController : ControllerBase
 
         var group = await _context.Groups
             .Include(g => g.Members)
+            .ThenInclude(m => m.User)
             .FirstOrDefaultAsync(g => g.Id == id);
 
         if (group is null)
@@ -74,6 +83,12 @@ public class GroupsController : ControllerBase
             {
                 Id = m.Id,
                 InviteEmail = m.InviteEmail,
+                User = m.User is not null ? new UserDto
+                {
+                    Id = m.User.Id,
+                    Name = m.User.Name,
+                    Email = m.User.Email,
+                } : null
             }).ToList()
         };
 
