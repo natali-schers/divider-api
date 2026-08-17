@@ -43,12 +43,12 @@ DTOs/          → contratos de entrada/saída (nunca expõem entidades EF diret
 ## 🛠️ Stack técnica
 - **ASP.NET Core Web API**
 - **Entity Framework Core** — ORM + migrations
-- **SQL Server** (Azure SQL Database)
+- **PostgreSQL**
 - **JWT Bearer** para autenticação + **BCrypt** para hash de senha
 - **Swagger** para documentação OpenAPI
 
 ## ☁️ Deploy
-A API está publicada na **Render**, com banco de dados em **Azure SQL Database**. Variáveis sensíveis (connection string, chaves JWT) foram configuradas via variáveis de ambiente da plataforma. Acesse via: **[Divider API](https://divider-api.onrender.com/swagger/)**
+A API está publicada na **Render**, com banco de dados em **PostgreSQL (Neon)**. Variáveis sensíveis (connection string, chaves JWT) foram configuradas via variáveis de ambiente da plataforma. Acesse via: **[Divider API](https://divider-api.onrender.com/swagger/)**
 
 ## 🔗 Projeto relacionado
 Este backend é consumido por um app mobile/web em Flutter:
