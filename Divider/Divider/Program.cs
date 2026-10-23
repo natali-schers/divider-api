@@ -1,5 +1,6 @@
 using Divider.Data;
 using Divider.Services;
+using Divider.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -18,7 +19,8 @@ builder.Services.AddDbContext<DividerDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped< IJwtService, JwtService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -79,6 +81,8 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddProblemDetails();
+
 var app = builder.Build();
 
 app.MapOpenApi();
@@ -94,6 +98,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseAuthorization();
+
+app.UseExceptionHandler();
+
+app.UseStatusCodePages();
 
 app.MapControllers();
 

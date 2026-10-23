@@ -1,86 +1,29 @@
-﻿using Divider.Data;
-using Divider.DTOs.Auth;
-using Divider.Models;
-using Divider.Services;
+﻿using Divider.DTOs.Auth;
+using Divider.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
-namespace Divider.Controllers;
-
-[ApiController]
-[Route("api/auth")]
-public class AuthController : ControllerBase
+namespace Divider.Controllers
 {
-    private readonly DividerDbContext _context;
-    private readonly JwtService _jwtService;
-
-    public AuthController(DividerDbContext context, JwtService jwtService)
+    [ApiController]
+    [Route("api/v1/auth")]
+    public class AuthController : ControllerBase
     {
-        _context = context;
-        _jwtService = jwtService;
-    }
+        private readonly IAuthService _authService;
 
-    [HttpPost("register")]
-    public async Task<ActionResult<UserDto>> Register(RegisterUserDto request)
-    {
-        var emailNormalized = request.Email.Trim().ToLowerInvariant();
+        public AuthController(IAuthService authService) => _authService = authService;
 
-        var emailInUse = await _context.Users
-            .AnyAsync(u => u.Email == emailNormalized);
-
-        if (emailInUse)
+        [HttpPost("register")]
+        public async Task<ActionResult<AuthResponseDto>> Register(RegisterUserDto request)
         {
-            return Conflict("Já existe uma conta com esse email.");
+            var result = await _authService.RegisterAsync(request);
+            return result is null ? Conflict("Já existe uma conta com esse email.") : Ok(result);
         }
 
-        if (request.Password.Length < 6)
+        [HttpPost("login")]
+        public async Task<ActionResult<AuthResponseDto>> Login(LoginDto request)
         {
-            return BadRequest("A senha deve ter ao menos 6 caracteres.");
+            var result = await _authService.LoginAsync(request);
+            return result is null ? Unauthorized("Email ou senha inválidos.") : Ok(result);
         }
-
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            Name = request.Name,
-            Email = emailNormalized,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-        };
-
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
-
-        var dto = new UserDto
-        {
-            Id = user.Id,
-            Name = user.Name,
-            Email = user.Email,
-        };
-
-        var token = _jwtService.GenerateToken(user);
-        return CreatedAtAction(nameof(Register), new AuthResponseDto { Token = token, User = dto });
-    }
-
-    [HttpPost("login")]
-    public async Task<ActionResult<UserDto>> Login(LoginDto request)
-    {
-        var emailNormalized = request.Email.Trim().ToLowerInvariant();
-
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == emailNormalized);
-
-        if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-        {
-            return Unauthorized("Email ou senha inválidos.");
-        }
-
-        var dto = new UserDto
-        {
-            Id = user.Id,
-            Name = user.Name,
-            Email = user.Email,
-        };
-
-        var token = _jwtService.GenerateToken(user);
-        return Ok(new AuthResponseDto { Token = token, User = dto });
     }
 }

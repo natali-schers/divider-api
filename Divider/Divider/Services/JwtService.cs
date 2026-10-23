@@ -3,10 +3,11 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Divider.Models;
+using Divider.Services.Interfaces;
 
 namespace Divider.Services;
 
-public class JwtService
+public class JwtService : IJwtService
 {
     private readonly IConfiguration _configuration;
 
