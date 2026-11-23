@@ -5,7 +5,5 @@
 /// </summary>
 public enum SplitType
 {
-    Equal,
-    Percentage,
-    CustomAmount
+    Equal
 }

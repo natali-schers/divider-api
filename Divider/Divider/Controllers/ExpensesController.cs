@@ -82,7 +82,8 @@ public class ExpensesController : ControllerBase
             return Forbid();
         }
 
-        if (!Enum.TryParse<SplitType>(request.SplitType, ignoreCase: true, out var splitType))
+        if (!Enum.TryParse<SplitType>(request.SplitType, ignoreCase: true, out var splitType)
+            || !Enum.IsDefined(splitType))
         {
             return BadRequest($"SplitType inválido: {request.SplitType}");
         }
@@ -94,49 +95,16 @@ public class ExpensesController : ControllerBase
             return BadRequest("O membro pagador não pertence a esse grupo.");
         }
 
-        List<ExpenseSplit> splits;
+        // Divisão igualitária: o resto dos centavos fica com o primeiro membro.
+        var splitAmount = Math.Round(request.Amount / group.Members.Count, 2);
+        var remainder = request.Amount - (splitAmount * group.Members.Count);
 
-        if (splitType == SplitType.Equal)
+        var splits = group.Members.Select((m, index) => new ExpenseSplit
         {
-            var splitAmount = Math.Round(request.Amount / group.Members.Count, 2);
-            var remainder = request.Amount - (splitAmount * group.Members.Count);
-
-            splits = group.Members.Select((m, index) => new ExpenseSplit
-            {
-                Id = Guid.NewGuid(),
-                MemberId = m.Id,
-                Amount = index == 0 ? splitAmount + remainder : splitAmount
-            }).ToList();
-        }
-        else
-        {
-            if (request.Splits is null || request.Splits.Count == 0)
-            {
-                return BadRequest("Splits são obrigatórios para esse tipo de divisão.");
-            }
-
-            var invalidSplitMember = request.Splits
-                .FirstOrDefault(s => !group.Members.Any(m => m.Id == s.MemberId));
-
-            if (invalidSplitMember is not null)
-            {
-                return BadRequest($"O membro {invalidSplitMember.MemberId} não pertence a esse grupo.");
-            }
-
-            var splitSum = request.Splits.Sum(s => s.Amount);
-
-            if (Math.Abs(splitSum - request.Amount) > 0.01m)
-            {
-                return BadRequest("A soma das divisões não bate com o valor total da despesa.");
-            }
-
-            splits = request.Splits.Select(s => new ExpenseSplit
-            {
-                Id = Guid.NewGuid(),
-                MemberId = s.MemberId,
-                Amount = s.Amount
-            }).ToList();
-        }
+            Id = Guid.NewGuid(),
+            MemberId = m.Id,
+            Amount = index == 0 ? splitAmount + remainder : splitAmount
+        }).ToList();
 
         var expense = new Expense
         {
@@ -183,7 +151,7 @@ public class ExpensesController : ControllerBase
             return NotFound("Grupo não encontrado.");
 
         if (!isMember)
-            return Forbid("Acesso negado.");
+            return StatusCode(StatusCodes.Status403Forbidden, "Acesso negado.");
 
         var expense = await _context.Expenses
             .FirstOrDefaultAsync(e => e.Id == expenseId && e.GroupId == groupId);
@@ -195,7 +163,7 @@ public class ExpensesController : ControllerBase
             .FirstOrDefault(m => m.UserId == currentUserId)?.Id;
 
         if (currentMemberId is null || expense.PaidByMemberId != currentMemberId)
-            return Forbid("Apenas o membro que pagou a despesa pode deletá-la.");
+            return StatusCode(StatusCodes.Status403Forbidden, "Apenas o membro que pagou a despesa pode deletá-la.");
 
         _context.Expenses.Remove(expense);
         await _context.SaveChangesAsync();

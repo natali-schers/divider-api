@@ -122,25 +122,18 @@ public class GroupsController : ControllerBase
             },
         };
 
-        var requestMemberEmails = request.Members
+        // Convidados entram sem conta vinculada; o usuário reivindica o membro via /claim.
+        // E-mails vazios, repetidos ou iguais ao do criador são ignorados.
+        var inviteEmails = request.Members
             .Where(m => !string.IsNullOrWhiteSpace(m.InviteEmail))
-            .Select(m => m.InviteEmail!.Trim().ToLowerInvariant())
-            .ToList();
+            .Select(m => m.InviteEmail.Trim().ToLowerInvariant())
+            .Where(email => email != currentUser.Email)
+            .Distinct();
 
-        members.AddRange(request.Members.Select(m =>
+        members.AddRange(inviteEmails.Select(email => new Member
         {
-            var normalizedInviteEmail = string.IsNullOrWhiteSpace(m.InviteEmail)
-                ? null
-                : m.InviteEmail.Trim().ToLowerInvariant();
-
-            var matchedUserId = (Guid?)null;
-
-            return new Member
-            {
-                Id = Guid.NewGuid(),
-                InviteEmail = normalizedInviteEmail,
-                UserId = matchedUserId,
-            };
+            Id = Guid.NewGuid(),
+            InviteEmail = email,
         }));
 
         if (members.Count < 2)
@@ -190,7 +183,7 @@ public class GroupsController : ControllerBase
         var isMember = group.Members.Any(m => m.UserId == currentUserId);
 
         if (!isMember)
-            return Forbid("Acesso negado.");
+            return StatusCode(StatusCodes.Status403Forbidden, "Acesso negado.");
 
         group.Expenses = await _context.Expenses
             .Where(e => e.GroupId == group.Id)

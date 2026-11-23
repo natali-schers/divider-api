@@ -9,6 +9,4 @@ public class CreateExpenseDto
     public required Guid PaidByMemberId { get; set; }
 
     public required string SplitType { get; set; }
-
-    public List<ExpenseSplitDto>? Splits { get; set; }
 }
