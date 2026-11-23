@@ -85,6 +85,10 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
+
+app.UseStatusCodePages();
+
 app.MapOpenApi();
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -96,12 +100,6 @@ app.UseCors(CorsPolicyName);
 app.UseAuthentication();
 
 app.UseAuthorization();
-
-app.UseAuthorization();
-
-app.UseExceptionHandler();
-
-app.UseStatusCodePages();
 
 app.MapControllers();
 
